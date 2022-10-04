@@ -1,10 +1,14 @@
 Import-Module ImportExcel
 
+$mainPath = ""
 $backupPath = "D:\Downloads\Atualizador\BackupPath"
 $dailyFilesPath = "D:\Downloads\Atualizador\Carga Diaria D-2 (Simplificado).xlsx"
 $dealerContactsPath = "D:\Downloads\Atualizador\Sheets\QUERIES\Contatos dos Concessionarios.xlsx"
 $dailyTrackerPath = "D:\Downloads\Atualizador\D-2 Tracker.xlsx"
 $requestsMadePath = "D:\Downloads\Atualizador\Monitorias Realizadas.xlsx"
+$dailyReportPath = "D:\Downloads\Atualizador\Relatorio Carga Diaria.xlsx"
+$proactivityTrackerPath = "D:\Downloads\Atualizador\proactivity.xlsx"
+$monitoredDealersPath = "D:\Downloads\Atualizador\Dealers Monitorados.xlsx"
 
 #Haven't figured out how to filter a Import-Excel object based on another Import-Excel object yet
 #Like so: $filteredDealerList = $dealerList | Where-Object {$_.Type -in $typesList}
@@ -13,14 +17,11 @@ $monitoredTypes = @{
     PS_1 = ("CONC", "FCOM", "SRSV", "UNSV", "DPEC")
     RO_2 = ("CONC", "FCOM", "SRSV", "UNSV")
 }
-#$monitoredTypesPath = "D:\Downloads\Atualizador\Sheets\DB\CADCLI\Tipos Monitorados.xlsx"
-$monitoredDealersPath = "D:\Downloads\Atualizador\Dealers Monitorados.xlsx"
+
+
 
 $dailySheetsNames = @("PS_1", "RO_2")
 
-Clear-Host
-# FOR TESTING
-Copy-Item "D:\Downloads\Atualizador\Carga Diaria D-2 (Simplificado) - Copy.xlsx" "D:\Downloads\Atualizador\Carga Diaria D-2 (Simplificado).xlsx"
 function Refresh-Connections {
     param (
         [Parameter(Mandatory, Position=0,
@@ -70,17 +71,6 @@ function Backup(){
     
 }
 
-function Update-DailyTracker(){
-    Backup $dailyTrackerPath $false
-
-    foreach ($name in $dailySheetsNames) {
-        $data = Import-Excel $dailyFilesPath -WorksheetName $name     
-        Export-Excel -Path $dailyTrackerPath -InputObject $data -WorksheetName $name -Append
-    }
-
-    Backup $dailyFilesPath
-}
-
 function Get-Dates(){
     param (
         [Parameter(Mandatory, Position = 0)]
@@ -90,6 +80,38 @@ function Get-Dates(){
     $dates = Import-Excel -Path $workbookPath | Select-Object "Date" | Sort-Object -Unique
 
     return $dates
+}
+
+function Get-DailyProactivity(){
+    $dailyProactivity = Import-Excel `
+        -Path $dailyReportPath -WorksheetName "effectivityBackend" -StartRow 2 -EndRow 2 -StartColumn 4 -EndColumn 4 -NoHeader
+
+    return $dailyProactivity.P1
+}
+
+function Set-DailyProactivity(){
+    param (
+        [Parameter(Mandatory, Position = 0)]
+        [double]$value
+    )
+
+    $header = "Dia", "%"
+    $today = Get-Date -Format "yyyy-MM-dd"
+    $proactivity = ConvertFrom-Csv -InputObject @("$today,$value") -Header $header
+
+    Export-Excel -Path $proactivityTrackerPath -InputObject $proactivity -WorksheetName "Sheet1" -Append
+
+}
+
+function Update-DailyTracker(){
+    Backup $dailyTrackerPath $false
+
+    foreach ($name in $dailySheetsNames) {
+        $data = Import-Excel $dailyFilesPath -WorksheetName $name     
+        Export-Excel -Path $dailyTrackerPath -InputObject $data -WorksheetName $name -Append
+    }
+
+    Backup $dailyFilesPath
 }
 
 function Update-RequestsMade(){
@@ -124,5 +146,25 @@ function Update-RequestsMade(){
     } 
 }
 
-#Update-DailyTracker
-Update-RequestsMade "2022-02-01"
+
+function Update-DailyReport(){
+    $actualProactivity = Get-DailyProactivity
+    Set-DailyProactivity ($actualProactivity)
+}
+
+Write-Output "Updating dealer contacts..."
+#Refresh-Connections $dealerContactsPath
+Write-Output "Done"
+
+$dates = Get-Dates $dailyFilesPath
+
+Write-Output "Updating daily tracker..."
+Update-DailyTracker $date 
+Write-Output "Done"
+
+Write-Output "Updating requests made..."
+foreach($date in $dates) {
+    Write-Output "Adding date $date"
+    Update-RequestsMade $date.Date
+}
+Write-Output "Done"
