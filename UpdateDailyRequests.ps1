@@ -1,24 +1,23 @@
 Import-Module ImportExcel
 
-$mainPath = ""
-$backupPath = "D:\Downloads\Atualizador\BackupPath"
-$dailyFilesPath = "D:\Downloads\Atualizador\Carga Diaria D-2 (Simplificado).xlsx"
-$dealerContactsPath = "D:\Downloads\Atualizador\Sheets\QUERIES\Contatos dos Concessionarios.xlsx"
-$dailyTrackerPath = "D:\Downloads\Atualizador\D-2 Tracker.xlsx"
-$requestsMadePath = "D:\Downloads\Atualizador\Monitorias Realizadas.xlsx"
-$dailyReportPath = "D:\Downloads\Atualizador\Relatorio Carga Diaria.xlsx"
-$proactivityTrackerPath = "D:\Downloads\Atualizador\proactivity.xlsx"
-$monitoredDealersPath = "D:\Downloads\Atualizador\Dealers Monitorados.xlsx"
+#TODO: Exception handling
 
-#Haven't figured out how to filter a Import-Excel object based on another Import-Excel object yet
+$backupPath = ".\Tiago\DB\backup"
+$dailyFilesPath = ".\Tiago\DB\Cognos\Carga Diaria D-2 (Simplificado).xlsx"
+$dealerContactsPath = ".\Tiago\QUERIES\Contatos dos Concessionarios.xlsx"
+$dailyTrackerPath = ".\Tiago\DB\Cognos\D-2 Tracker.xlsx"
+$requestsMadePath = ".\Tiago\DB\CargaDiariaV1\Monitorias Realizadas.xlsx"
+$dailyReportPath = ".\Relatórios\Relatório Carga Diária\Relatorio Carga Diaria.xlsx"
+$proactivityTrackerPath = ".\Tiago\DB\CargaDiariaV1\proatividade.xlsx"
+$monitoredDealersPath = ".\Tiago\DB\CargaDiariaV1\Dealers Monitorados.xlsx"
+
+#Haven't yet figured out how to filter a Import-Excel object based on another Import-Excel object 
 #Like so: $filteredDealerList = $dealerList | Where-Object {$_.Type -in $typesList}
-#Hardcoding the dealer types:
+#So, I'm hardcoding the dealer types:
 $monitoredTypes = @{
     PS_1 = ("CONC", "FCOM", "SRSV", "UNSV", "DPEC")
     RO_2 = ("CONC", "FCOM", "SRSV", "UNSV")
 }
-
-
 
 $dailySheetsNames = @("PS_1", "RO_2")
 
@@ -152,19 +151,34 @@ function Update-DailyReport(){
     Set-DailyProactivity ($actualProactivity)
 }
 
-Write-Output "Updating dealer contacts..."
-#Refresh-Connections $dealerContactsPath
-Write-Output "Done"
+function main(){
+    Write-Progress -Activity "Running Script" -Status "Updating dealer contacts" -PercentComplete 10
 
-$dates = Get-Dates $dailyFilesPath
+    Refresh-Connections $dealerContactsPath
+    Write-Output "Done updating dealer contacts"
+    
+    Write-Progress -Activity "Running Script" -Status "Getting dates to update" -PercentComplete 30
+    $dates = Get-Dates $dailyFilesPath
 
-Write-Output "Updating daily tracker..."
-Update-DailyTracker $date 
-Write-Output "Done"
+    Write-Progress -Activity "Running Script" -Status "Updating daily tracker" -PercentComplete 50
+    Update-DailyTracker $date 
+    Write-Output "Done updating daily tracker"
 
-Write-Output "Updating requests made..."
-foreach($date in $dates) {
-    Write-Output "Adding date $date"
-    Update-RequestsMade $date.Date
+    Write-Progress -Activity "Running Script" -Status "Updating requests made" -PercentComplete 70
+    foreach($date in $dates) {
+        Write-Output "Adding date $date"
+        Update-RequestsMade $date.Date
+    }
+    Write-Output "Done updating requests made"
+
+    $updateReportAnswer = Read-Host "Update the report as well? (y/N)"
+    if ($updateReportAnswer == "y") {
+        Refresh-Connections $dailyReportPath
+        Write-Progress -Activity "Running Script" -Status "Updating the report" -PercentComplete 80
+    }
+
+    Write-Progress -Activity "Running Script" -Completed
 }
-Write-Output "Done"
+
+
+main
