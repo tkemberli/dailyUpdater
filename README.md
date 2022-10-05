@@ -1,2 +1,2 @@
 # dailyUpdater
-A shell script to updating one of my reports
+A shell script for updating one of my reports
