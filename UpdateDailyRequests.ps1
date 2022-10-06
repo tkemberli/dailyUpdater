@@ -1,15 +1,14 @@
 Import-Module ImportExcel
 
 #TODO: Exception handling
-
-$backupPath = ".\Tiago\DB\backup"
-$dailyFilesPath = ".\Tiago\DB\Cognos\Carga Diaria D-2 (Simplificado).xlsx"
-$dealerContactsPath = ".\Tiago\QUERIES\Contatos dos Concessionarios.xlsx"
-$dailyTrackerPath = ".\Tiago\DB\Cognos\D-2 Tracker.xlsx"
-$requestsMadePath = ".\Tiago\DB\CargaDiariaV1\Monitorias Realizadas.xlsx"
-$dailyReportPath = ".\Relatórios\Relatório Carga Diária\Relatorio Carga Diaria.xlsx"
-$proactivityTrackerPath = ".\Tiago\DB\CargaDiariaV1\proatividade.xlsx"
-$monitoredDealersPath = ".\Tiago\DB\CargaDiariaV1\Dealers Monitorados.xlsx"
+$backupPath = $PSScriptRoot + "\Tiago\DB\backup"
+$dailyFilesPath = $PSScriptRoot + "\Tiago\DB\Cognos\Carga Diaria D-2 (Simplificado).xlsx"
+$dealerContactsPath = $PSScriptRoot + "\Tiago\QUERIES\Contatos dos Concessionarios.xlsx"
+$dailyTrackerPath = $PSScriptRoot + "\Tiago\DB\Cognos\D-2 Tracker.xlsx"
+$requestsMadePath = $PSScriptRoot + "\Tiago\DB\CargaDiariaV1\Monitorias Realizadas.xlsx"
+$dailyReportPath = $PSScriptRoot + "\Relatórios\Relatório Carga Diária\Relatorio Carga Diaria.xlsx"
+$proactivityTrackerPath = $PSScriptRoot + "\Tiago\DB\CargaDiariaV1\proatividade.xlsx"
+$monitoredDealersPath = $PSScriptRoot + "\Tiago\DB\CargaDiariaV1\Dealers Monitorados.xlsx"
 
 #Haven't yet figured out how to filter a Import-Excel object based on another Import-Excel object 
 #Like so: $filteredDealerList = $dealerList | Where-Object {$_.Type -in $typesList}
