@@ -40,7 +40,9 @@ function Refresh-Connections {
         Start-Sleep -Seconds 1    
     }
 
+    $workbook.DisplayAlerts = $false;
     $workbook.Save()
+    $workbook.DisplayAlerts = $True
     if (!$keepOpen) {
         $workbook.Close()
     }
