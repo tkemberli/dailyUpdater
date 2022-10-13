@@ -1,6 +1,8 @@
 Import-Module ImportExcel
 
-#TODO: Exception handling
+#TODO:Add Exception Handling -- Trought It's not really needed, since any exception is printed to the 
+#   terminal and require manual fixing
+
 $backupPath = $PSScriptRoot + "\Tiago\DB\backup"
 $dailyFilesPath = $PSScriptRoot + "\Tiago\DB\Cognos\Carga Diaria D-2 (Simplificado).xlsx"
 $dealerContactsPath = $PSScriptRoot + "\Tiago\QUERIES\Contatos dos Concessionarios.xlsx"
@@ -9,6 +11,9 @@ $requestsMadePath = $PSScriptRoot + "\Tiago\DB\CargaDiariaV1\Monitorias Realizad
 $dailyReportPath = $PSScriptRoot + "\Relatórios\Relatório Carga Diária\Relatorio Carga Diaria.xlsx"
 $proactivityTrackerPath = $PSScriptRoot + "\Tiago\DB\CargaDiariaV1\proatividade.xlsx"
 $monitoredDealersPath = $PSScriptRoot + "\Tiago\DB\CargaDiariaV1\Dealers Monitorados.xlsx"
+$allPresentFilesPath = $PSScriptRoot + "\Tiago\DB\Cognos\Carga Arquivos Presentes (Simplificado).xlsx"
+$allPresentFilesBackupPath = $PSScriptRoot + "\Tiago\DB\Cognos\Carga Arquivos Presentes\currentFiles.xlsx"
+$allPresentFilesBackupPathOlder = $PSScriptRoot + "\Tiago\DB\Cognos\Carga Arquivos Presentes\currentFilesOlder.xlsx"
 
 #Haven't yet figured out how to filter a Import-Excel object based on another Import-Excel object 
 #Like so: $filteredDealerList = $dealerList | Where-Object {$_.Type -in $typesList}
@@ -148,8 +153,14 @@ function Update-RequestsMade(){
 
 
 function Update-DailyReport(){
+    Move-Item -Path $allPresentFilesBackupPath $allPresentFilesBackupPathOlder -Force
+    Move-Item -Path $allPresentFilesPath -Destination $allPresentFilesBackupPath -Force
+
     $actualProactivity = Get-DailyProactivity
     Set-DailyProactivity ($actualProactivity)
+    Refresh-Connections ($dailyReportPath)
+
+    
 }
 
 function main(){
@@ -174,11 +185,12 @@ function main(){
 
     $updateReportAnswer = Read-Host "Update the report as well? (y/N)"
     if ($updateReportAnswer == "y") {
-        Refresh-Connections $dailyReportPath
         Write-Progress -Activity "Running Script" -Status "Updating the report" -PercentComplete 80
+        Update-DailyReport
     }
 
     Write-Progress -Activity "Running Script" -Completed
+    Write-Output "All done!"
 }
 
 
